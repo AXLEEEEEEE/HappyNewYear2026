@@ -3,20 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <title>Happy New Year 2026</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>
 html, body {
     margin: 0;
     padding: 0;
-    overflow: hidden;
     background: black;
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 canvas {
     display: block;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
 }
 </style>
 </head>
@@ -28,43 +29,51 @@ canvas {
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
+let cw, ch, dpr;
+
 function resizeCanvas() {
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = innerWidth * dpr;
-    canvas.height = innerHeight * dpr;
+    dpr = Math.min(window.devicePixelRatio || 1, 2); // limit for performance
+    cw = window.innerWidth;
+    ch = window.innerHeight;
+
+    canvas.width = cw * dpr;
+    canvas.height = ch * dpr;
+    canvas.style.width = cw + "px";
+    canvas.style.height = ch + "px";
+
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
+/* ================= DATA ================= */
 const words = ["HAPPY", "NEW", "YEAR", "2026"];
 let wordIndex = 0;
 let finalShown = false;
+let lastWordTime = 0;
+
+const isMobile = cw < 768;
+const WORD_DELAY = 6000;
+const FINAL_DELAY = 9000;
+const particleStep = isMobile ? 9 : 6;
 
 let rockets = [];
 let bgParticles = [];
 let textParticles = [];
 
-let lastWordTime = 0;
-
-/* ⏳ MAS MATAGAL NA DELAY */
-const WORD_DELAY = 6000;   // 6 seconds bawat word
-const FINAL_DELAY = 9000;  // mas dramatic final text
-
-const isMobile = innerWidth < 768;
-const particleStep = isMobile ? 8 : 6;
-
-function responsiveFont(size) {
-    return Math.max(innerWidth * size, 40);
+/* ================= UTILS ================= */
+function responsiveFont(ratio) {
+    return Math.max(cw * ratio, isMobile ? 42 : 60);
 }
 
+/* ================= ROCKET ================= */
 class Rocket {
     constructor(type = "normal") {
         this.type = type;
-        this.x = innerWidth / 2 + (Math.random() - 0.5) * innerWidth * 0.3;
-        this.y = innerHeight;
-        this.targetY = innerHeight * 0.4;
-        this.speed = type !== "normal" ? 7 : 5; // mas mabagal konti
+        this.x = cw / 2 + (Math.random() - 0.5) * cw * 0.35;
+        this.y = ch + 10;
+        this.targetY = ch * 0.4;
+        this.speed = type === "normal" ? 4.5 : 5.5;
         this.exploded = false;
     }
 
@@ -78,19 +87,19 @@ class Rocket {
 
     draw() {
         ctx.beginPath();
-        ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
-        ctx.fillStyle = this.type === "normal" ? "white" : "red";
+        ctx.arc(this.x, this.y, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = this.type === "normal" ? "#fff" : "#ff4444";
         ctx.fill();
     }
 
     explode() {
-        const count = isMobile ? 60 : 110;
+        const count = isMobile ? 55 : 110;
         for (let i = 0; i < count; i++) {
             bgParticles.push({
                 x: this.x,
                 y: this.y,
-                vx: Math.cos(Math.random() * Math.PI * 2) * (Math.random() * 2.5 + 0.5),
-                vy: Math.sin(Math.random() * Math.PI * 2) * (Math.random() * 2.5 + 0.5),
+                vx: Math.cos(Math.random() * Math.PI * 2) * (Math.random() * 2 + 0.6),
+                vy: Math.sin(Math.random() * Math.PI * 2) * (Math.random() * 2 + 0.6),
                 life: 1,
                 color: `hsla(${Math.random() * 360},100%,60%,`
             });
@@ -109,15 +118,16 @@ class Rocket {
     }
 }
 
+/* ================= PARTICLES ================= */
 function updateBgParticles() {
     for (let i = bgParticles.length - 1; i >= 0; i--) {
         const p = bgParticles[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.life -= 0.01; // mas tumatagal ang spark
+        p.life -= 0.012;
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
         ctx.fillStyle = p.color + p.life + ")";
         ctx.fill();
 
@@ -125,60 +135,62 @@ function updateBgParticles() {
     }
 }
 
+/* ================= TEXT ================= */
 function createText(word) {
-    textParticles = [];
+    textParticles.length = 0;
+
     const temp = document.createElement("canvas");
-    temp.width = innerWidth;
-    temp.height = innerHeight;
+    temp.width = cw;
+    temp.height = ch;
     const tctx = temp.getContext("2d");
 
-    tctx.fillStyle = "white";
+    tctx.fillStyle = "#fff";
     tctx.textAlign = "center";
     tctx.textBaseline = "middle";
-    tctx.font = `bold ${responsiveFont(0.18)}px Arial Black`;
-    tctx.fillText(word, innerWidth / 2, innerHeight / 2);
+    tctx.font = `900 ${responsiveFont(0.18)}px Arial Black`;
+    tctx.fillText(word, cw / 2, ch / 2);
 
-    spawnParticlesFromCanvas(temp);
+    spawnTextParticles(temp);
 }
 
 function createFinalText() {
-    textParticles = [];
+    textParticles.length = 0;
+
     const temp = document.createElement("canvas");
-    temp.width = innerWidth;
-    temp.height = innerHeight;
+    temp.width = cw;
+    temp.height = ch;
     const tctx = temp.getContext("2d");
 
-    tctx.fillStyle = "white";
+    tctx.fillStyle = "#fff";
     tctx.textAlign = "center";
     tctx.textBaseline = "middle";
 
-    tctx.font = `bold ${responsiveFont(0.15)}px Arial Black`;
-    tctx.fillText("HAPPY", innerWidth / 2, innerHeight / 2 - responsiveFont(0.18));
+    tctx.font = `900 ${responsiveFont(0.15)}px Arial Black`;
+    tctx.fillText("HAPPY", cw / 2, ch / 2 - responsiveFont(0.18));
 
-    tctx.font = `bold ${responsiveFont(0.13)}px Arial Black`;
-    tctx.fillText("NEW YEAR", innerWidth / 2, innerHeight / 2);
+    tctx.font = `900 ${responsiveFont(0.13)}px Arial Black`;
+    tctx.fillText("NEW YEAR", cw / 2, ch / 2);
 
-    tctx.font = `bold ${responsiveFont(0.18)}px Arial Black`;
-    tctx.fillText("2026", innerWidth / 2, innerHeight / 2 + responsiveFont(0.18));
+    tctx.font = `900 ${responsiveFont(0.18)}px Arial Black`;
+    tctx.fillText("2026", cw / 2, ch / 2 + responsiveFont(0.18));
 
-    spawnParticlesFromCanvas(temp);
+    spawnTextParticles(temp);
 }
 
-function spawnParticlesFromCanvas(temp) {
-    const img = temp.getContext("2d")
-        .getImageData(0, 0, innerWidth, innerHeight).data;
+function spawnTextParticles(temp) {
+    const img = temp.getContext("2d").getImageData(0, 0, cw, ch).data;
 
-    for (let y = 0; y < innerHeight; y += particleStep) {
-        for (let x = 0; x < innerWidth; x += particleStep) {
-            const i = (y * innerWidth + x) * 4;
+    for (let y = 0; y < ch; y += particleStep) {
+        for (let x = 0; x < cw; x += particleStep) {
+            const i = (y * cw + x) * 4;
             if (img[i + 3] > 150) {
                 textParticles.push({
-                    x: innerWidth / 2,
-                    y: innerHeight * 0.4,
+                    x: cw / 2,
+                    y: ch * 0.4,
                     tx: x,
                     ty: y,
-                    vx: (Math.random() - 0.5) * 8,
-                    vy: (Math.random() - 0.5) * 8
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6
                 });
             }
         }
@@ -187,32 +199,33 @@ function spawnParticlesFromCanvas(temp) {
 
 function updateTextParticles() {
     ctx.save();
-    ctx.shadowBlur = 25;
+    ctx.shadowBlur = 22;
     ctx.shadowColor = "red";
 
-    textParticles.forEach(p => {
-        p.vx += (p.tx - p.x) * 0.001; // mas mabagal
-        p.vy += (p.ty - p.y) * 0.001;
-        p.vx *= 0.93;
-        p.vy *= 0.93;
-
+    for (const p of textParticles) {
+        p.vx += (p.tx - p.x) * 0.0012;
+        p.vy += (p.ty - p.y) * 0.0012;
+        p.vx *= 0.92;
+        p.vy *= 0.92;
         p.x += p.vx;
         p.y += p.vy;
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = "white";
+        ctx.arc(p.x, p.y, isMobile ? 2.2 : 2.6, 0, Math.PI * 2);
+        ctx.fillStyle = "#fff";
         ctx.fill();
-    });
-
+    }
     ctx.restore();
 }
 
+/* ================= ANIMATE ================= */
 function animate(time) {
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.fillRect(0, 0, innerWidth, innerHeight);
+    ctx.fillStyle = "rgba(0,0,0,0.28)";
+    ctx.fillRect(0, 0, cw, ch);
 
-    if (Math.random() < 0.02) rockets.push(new Rocket());
+    if (Math.random() < (isMobile ? 0.015 : 0.02)) {
+        rockets.push(new Rocket());
+    }
 
     if (
         wordIndex < words.length &&
@@ -243,7 +256,6 @@ function animate(time) {
 
 requestAnimationFrame(animate);
 </script>
-
 </body>
 </html>
 
