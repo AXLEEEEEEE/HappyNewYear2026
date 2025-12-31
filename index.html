@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -46,8 +46,10 @@ let bgParticles = [];
 let textParticles = [];
 
 let lastWordTime = 0;
-const WORD_DELAY = 3000;
-const FINAL_DELAY = 3500;
+
+/* ⏳ MAS MATAGAL NA DELAY */
+const WORD_DELAY = 6000;   // 6 seconds bawat word
+const FINAL_DELAY = 9000;  // mas dramatic final text
 
 const isMobile = innerWidth < 768;
 const particleStep = isMobile ? 8 : 6;
@@ -62,7 +64,7 @@ class Rocket {
         this.x = innerWidth / 2 + (Math.random() - 0.5) * innerWidth * 0.3;
         this.y = innerHeight;
         this.targetY = innerHeight * 0.4;
-        this.speed = type !== "normal" ? 9 : 6;
+        this.speed = type !== "normal" ? 7 : 5; // mas mabagal konti
         this.exploded = false;
     }
 
@@ -82,13 +84,13 @@ class Rocket {
     }
 
     explode() {
-        const count = isMobile ? 50 : 90;
+        const count = isMobile ? 60 : 110;
         for (let i = 0; i < count; i++) {
             bgParticles.push({
                 x: this.x,
                 y: this.y,
-                vx: Math.cos(Math.random() * Math.PI * 2) * (Math.random() * 3 + 1),
-                vy: Math.sin(Math.random() * Math.PI * 2) * (Math.random() * 3 + 1),
+                vx: Math.cos(Math.random() * Math.PI * 2) * (Math.random() * 2.5 + 0.5),
+                vy: Math.sin(Math.random() * Math.PI * 2) * (Math.random() * 2.5 + 0.5),
                 life: 1,
                 color: `hsla(${Math.random() * 360},100%,60%,`
             });
@@ -112,7 +114,7 @@ function updateBgParticles() {
         const p = bgParticles[i];
         p.x += p.vx;
         p.y += p.vy;
-        p.life -= 0.015;
+        p.life -= 0.01; // mas tumatagal ang spark
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
@@ -175,8 +177,8 @@ function spawnParticlesFromCanvas(temp) {
                     y: innerHeight * 0.4,
                     tx: x,
                     ty: y,
-                    vx: (Math.random() - 0.5) * 12,
-                    vy: (Math.random() - 0.5) * 12
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8
                 });
             }
         }
@@ -185,14 +187,14 @@ function spawnParticlesFromCanvas(temp) {
 
 function updateTextParticles() {
     ctx.save();
-    ctx.shadowBlur = 30;
+    ctx.shadowBlur = 25;
     ctx.shadowColor = "red";
 
     textParticles.forEach(p => {
-        p.vx += (p.tx - p.x) * 0.002;
-        p.vy += (p.ty - p.y) * 0.002;
-        p.vx *= 0.88;
-        p.vy *= 0.88;
+        p.vx += (p.tx - p.x) * 0.001; // mas mabagal
+        p.vy += (p.ty - p.y) * 0.001;
+        p.vx *= 0.93;
+        p.vy *= 0.93;
 
         p.x += p.vx;
         p.y += p.vy;
@@ -207,20 +209,24 @@ function updateTextParticles() {
 }
 
 function animate(time) {
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fillRect(0, 0, innerWidth, innerHeight);
 
-    if (Math.random() < 0.04) rockets.push(new Rocket());
+    if (Math.random() < 0.02) rockets.push(new Rocket());
 
-    if (wordIndex < words.length &&
+    if (
+        wordIndex < words.length &&
         !rockets.some(r => r.type === "word") &&
-        time - lastWordTime > WORD_DELAY) {
+        time - lastWordTime > WORD_DELAY
+    ) {
         rockets.push(new Rocket("word"));
     }
 
-    if (wordIndex === words.length &&
+    if (
+        wordIndex === words.length &&
         !finalShown &&
-        time - lastWordTime > FINAL_DELAY) {
+        time - lastWordTime > FINAL_DELAY
+    ) {
         rockets.push(new Rocket("final"));
     }
 
