@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -37,41 +37,32 @@ function resizeCanvas() {
 resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
-// ================= TEXT SEQUENCE =================
 const words = ["HAPPY", "NEW", "YEAR", "2026"];
 let wordIndex = 0;
 let finalShown = false;
 
-// ================= ARRAYS =================
 let rockets = [];
 let bgParticles = [];
 let textParticles = [];
 
-// ================= TIMING CONTROL =================
 let lastWordTime = 0;
-let textStartTime = 0;
-let textHolding = false;
+const WORD_DELAY = 3000;
+const FINAL_DELAY = 3500;
 
-const WORD_DELAY = 4000;          // pagitan bago next word rocket
-const WORD_DISPLAY_TIME = 3500;   // TAGAL NA NAKATAMBAY ANG WORD
-const FINAL_DELAY = 4500;
-
-// ================= RESPONSIVE =================
 const isMobile = innerWidth < 768;
-const particleStep = isMobile ? 9 : 7;
+const particleStep = isMobile ? 8 : 6;
 
 function responsiveFont(size) {
-    return Math.max(innerWidth * size, 42);
+    return Math.max(innerWidth * size, 40);
 }
 
-// ================= ROCKET =================
 class Rocket {
     constructor(type = "normal") {
         this.type = type;
         this.x = innerWidth / 2 + (Math.random() - 0.5) * innerWidth * 0.3;
         this.y = innerHeight;
         this.targetY = innerHeight * 0.4;
-        this.speed = type !== "normal" ? 8 : 6;
+        this.speed = type !== "normal" ? 9 : 6;
         this.exploded = false;
     }
 
@@ -86,7 +77,7 @@ class Rocket {
     draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
-        ctx.fillStyle = "white";
+        ctx.fillStyle = this.type === "normal" ? "white" : "red";
         ctx.fill();
     }
 
@@ -106,8 +97,6 @@ class Rocket {
         if (this.type === "word" && wordIndex < words.length) {
             createText(words[wordIndex]);
             wordIndex++;
-            textStartTime = performance.now();
-            textHolding = true;
             lastWordTime = performance.now();
         }
 
@@ -118,7 +107,6 @@ class Rocket {
     }
 }
 
-// ================= BACKGROUND PARTICLES =================
 function updateBgParticles() {
     for (let i = bgParticles.length - 1; i >= 0; i--) {
         const p = bgParticles[i];
@@ -135,7 +123,6 @@ function updateBgParticles() {
     }
 }
 
-// ================= WORD TEXT =================
 function createText(word) {
     textParticles = [];
     const temp = document.createElement("canvas");
@@ -152,7 +139,6 @@ function createText(word) {
     spawnParticlesFromCanvas(temp);
 }
 
-// ================= FINAL TEXT =================
 function createFinalText() {
     textParticles = [];
     const temp = document.createElement("canvas");
@@ -176,7 +162,6 @@ function createFinalText() {
     spawnParticlesFromCanvas(temp);
 }
 
-// ================= SPAWN TEXT PARTICLES =================
 function spawnParticlesFromCanvas(temp) {
     const img = temp.getContext("2d")
         .getImageData(0, 0, innerWidth, innerHeight).data;
@@ -190,27 +175,24 @@ function spawnParticlesFromCanvas(temp) {
                     y: innerHeight * 0.4,
                     tx: x,
                     ty: y,
-                    vx: 0,
-                    vy: 0
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.5) * 12
                 });
             }
         }
     }
 }
 
-// ================= UPDATE TEXT PARTICLES =================
-function updateTextParticles(time) {
+function updateTextParticles() {
     ctx.save();
-    ctx.shadowBlur = 25;
+    ctx.shadowBlur = 30;
     ctx.shadowColor = "red";
 
     textParticles.forEach(p => {
-        if (!textHolding) {
-            p.vx += (p.tx - p.x) * 0.002;
-            p.vy += (p.ty - p.y) * 0.002;
-        }
-        p.vx *= 0.92;
-        p.vy *= 0.92;
+        p.vx += (p.tx - p.x) * 0.002;
+        p.vy += (p.ty - p.y) * 0.002;
+        p.vx *= 0.88;
+        p.vy *= 0.88;
 
         p.x += p.vx;
         p.y += p.vy;
@@ -222,32 +204,23 @@ function updateTextParticles(time) {
     });
 
     ctx.restore();
-
-    if (textHolding && time - textStartTime > WORD_DISPLAY_TIME) {
-        textHolding = false;
-    }
 }
 
-// ================= MAIN LOOP =================
 function animate(time) {
     ctx.fillStyle = "rgba(0,0,0,0.35)";
     ctx.fillRect(0, 0, innerWidth, innerHeight);
 
     if (Math.random() < 0.04) rockets.push(new Rocket());
 
-    if (
-        wordIndex < words.length &&
+    if (wordIndex < words.length &&
         !rockets.some(r => r.type === "word") &&
-        time - lastWordTime > WORD_DELAY
-    ) {
+        time - lastWordTime > WORD_DELAY) {
         rockets.push(new Rocket("word"));
     }
 
-    if (
-        wordIndex === words.length &&
+    if (wordIndex === words.length &&
         !finalShown &&
-        time - lastWordTime > FINAL_DELAY
-    ) {
+        time - lastWordTime > FINAL_DELAY) {
         rockets.push(new Rocket("final"));
     }
 
@@ -258,7 +231,7 @@ function animate(time) {
     }
 
     updateBgParticles();
-    updateTextParticles(time);
+    updateTextParticles();
     requestAnimationFrame(animate);
 }
 
