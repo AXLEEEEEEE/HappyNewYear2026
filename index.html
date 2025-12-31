@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <title>Happy New Year 2026</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- MOBILE ONLY -->
+<meta name="viewport" content="width=375, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
 <style>
 html, body {
     margin: 0;
@@ -13,38 +16,41 @@ html, body {
     height: 100%;
     overflow: hidden;
 }
+
+/* FIXED MOBILE FRAME */
+#frame {
+    position: absolute;
+    width: 375px;   /* iPhone width reference */
+    height: 667px;  /* iPhone height reference */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: black;
+}
+
 canvas {
-    display: block;
     width: 100%;
     height: 100%;
-    touch-action: none;
+    display: block;
 }
 </style>
 </head>
 <body>
 
-<canvas id="canvas"></canvas>
+<div id="frame">
+    <canvas id="canvas"></canvas>
+</div>
 
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-let cw, ch, dpr;
+/* LOCKED SIZE (MOBILE ONLY) */
+const WIDTH = 375;
+const HEIGHT = 667;
 
-function resizeCanvas() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2); // limit for performance
-    cw = window.innerWidth;
-    ch = window.innerHeight;
-
-    canvas.width = cw * dpr;
-    canvas.height = ch * dpr;
-    canvas.style.width = cw + "px";
-    canvas.style.height = ch + "px";
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-}
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
+canvas.width = WIDTH;
+canvas.height = HEIGHT;
 
 /* ================= DATA ================= */
 const words = ["HAPPY", "NEW", "YEAR", "2026"];
@@ -52,28 +58,22 @@ let wordIndex = 0;
 let finalShown = false;
 let lastWordTime = 0;
 
-const isMobile = cw < 768;
 const WORD_DELAY = 6000;
 const FINAL_DELAY = 9000;
-const particleStep = isMobile ? 9 : 6;
+const particleStep = 8;
 
 let rockets = [];
 let bgParticles = [];
 let textParticles = [];
 
-/* ================= UTILS ================= */
-function responsiveFont(ratio) {
-    return Math.max(cw * ratio, isMobile ? 42 : 60);
-}
-
 /* ================= ROCKET ================= */
 class Rocket {
     constructor(type = "normal") {
         this.type = type;
-        this.x = cw / 2 + (Math.random() - 0.5) * cw * 0.35;
-        this.y = ch + 10;
-        this.targetY = ch * 0.4;
-        this.speed = type === "normal" ? 4.5 : 5.5;
+        this.x = WIDTH / 2 + (Math.random() - 0.5) * WIDTH * 0.35;
+        this.y = HEIGHT + 10;
+        this.targetY = HEIGHT * 0.4;
+        this.speed = type === "normal" ? 4 : 5;
         this.exploded = false;
     }
 
@@ -88,12 +88,12 @@ class Rocket {
     draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, 2.2, 0, Math.PI * 2);
-        ctx.fillStyle = this.type === "normal" ? "#fff" : "#ff4444";
+        ctx.fillStyle = this.type === "normal" ? "#fff" : "#ff3333";
         ctx.fill();
     }
 
     explode() {
-        const count = isMobile ? 55 : 110;
+        const count = 55;
         for (let i = 0; i < count; i++) {
             bgParticles.push({
                 x: this.x,
@@ -140,15 +140,15 @@ function createText(word) {
     textParticles.length = 0;
 
     const temp = document.createElement("canvas");
-    temp.width = cw;
-    temp.height = ch;
+    temp.width = WIDTH;
+    temp.height = HEIGHT;
     const tctx = temp.getContext("2d");
 
     tctx.fillStyle = "#fff";
     tctx.textAlign = "center";
     tctx.textBaseline = "middle";
-    tctx.font = `900 ${responsiveFont(0.18)}px Arial Black`;
-    tctx.fillText(word, cw / 2, ch / 2);
+    tctx.font = "900 68px Arial Black"; // LOCKED FONT
+    tctx.fillText(word, WIDTH / 2, HEIGHT / 2);
 
     spawnTextParticles(temp);
 }
@@ -157,36 +157,36 @@ function createFinalText() {
     textParticles.length = 0;
 
     const temp = document.createElement("canvas");
-    temp.width = cw;
-    temp.height = ch;
+    temp.width = WIDTH;
+    temp.height = HEIGHT;
     const tctx = temp.getContext("2d");
 
     tctx.fillStyle = "#fff";
     tctx.textAlign = "center";
     tctx.textBaseline = "middle";
 
-    tctx.font = `900 ${responsiveFont(0.15)}px Arial Black`;
-    tctx.fillText("HAPPY", cw / 2, ch / 2 - responsiveFont(0.18));
+    tctx.font = "900 56px Arial Black";
+    tctx.fillText("HAPPY", WIDTH / 2, HEIGHT / 2 - 80);
 
-    tctx.font = `900 ${responsiveFont(0.13)}px Arial Black`;
-    tctx.fillText("NEW YEAR", cw / 2, ch / 2);
+    tctx.font = "900 48px Arial Black";
+    tctx.fillText("NEW YEAR", WIDTH / 2, HEIGHT / 2);
 
-    tctx.font = `900 ${responsiveFont(0.18)}px Arial Black`;
-    tctx.fillText("2026", cw / 2, ch / 2 + responsiveFont(0.18));
+    tctx.font = "900 72px Arial Black";
+    tctx.fillText("2026", WIDTH / 2, HEIGHT / 2 + 80);
 
     spawnTextParticles(temp);
 }
 
 function spawnTextParticles(temp) {
-    const img = temp.getContext("2d").getImageData(0, 0, cw, ch).data;
+    const img = temp.getContext("2d").getImageData(0, 0, WIDTH, HEIGHT).data;
 
-    for (let y = 0; y < ch; y += particleStep) {
-        for (let x = 0; x < cw; x += particleStep) {
-            const i = (y * cw + x) * 4;
+    for (let y = 0; y < HEIGHT; y += particleStep) {
+        for (let x = 0; x < WIDTH; x += particleStep) {
+            const i = (y * WIDTH + x) * 4;
             if (img[i + 3] > 150) {
                 textParticles.push({
-                    x: cw / 2,
-                    y: ch * 0.4,
+                    x: WIDTH / 2,
+                    y: HEIGHT * 0.4,
                     tx: x,
                     ty: y,
                     vx: (Math.random() - 0.5) * 6,
@@ -211,7 +211,7 @@ function updateTextParticles() {
         p.y += p.vy;
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, isMobile ? 2.2 : 2.6, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 2.4, 0, Math.PI * 2);
         ctx.fillStyle = "#fff";
         ctx.fill();
     }
@@ -221,27 +221,21 @@ function updateTextParticles() {
 /* ================= ANIMATE ================= */
 function animate(time) {
     ctx.fillStyle = "rgba(0,0,0,0.28)";
-    ctx.fillRect(0, 0, cw, ch);
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-    if (Math.random() < (isMobile ? 0.015 : 0.02)) {
-        rockets.push(new Rocket());
-    }
+    if (Math.random() < 0.015) rockets.push(new Rocket());
 
     if (
         wordIndex < words.length &&
         !rockets.some(r => r.type === "word") &&
         time - lastWordTime > WORD_DELAY
-    ) {
-        rockets.push(new Rocket("word"));
-    }
+    ) rockets.push(new Rocket("word"));
 
     if (
         wordIndex === words.length &&
         !finalShown &&
         time - lastWordTime > FINAL_DELAY
-    ) {
-        rockets.push(new Rocket("final"));
-    }
+    ) rockets.push(new Rocket("final"));
 
     for (let i = rockets.length - 1; i >= 0; i--) {
         rockets[i].update();
@@ -256,6 +250,7 @@ function animate(time) {
 
 requestAnimationFrame(animate);
 </script>
+
 </body>
 </html>
 
