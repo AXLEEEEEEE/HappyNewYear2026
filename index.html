@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <title>Happy New Year 2026</title>
 
-<!-- PROPER MOBILE VIEWPORT -->
+<!-- MOBILE VIEWPORT -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<!-- BETTER MOBILE FONT -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800;900&display=swap" rel="stylesheet">
 
 <style>
 html, body {
@@ -66,7 +69,7 @@ class Rocket {
         this.x = WIDTH / 2 + (Math.random() - 0.5) * WIDTH * 0.4;
         this.y = HEIGHT + 20;
         this.targetY = HEIGHT * 0.35;
-        this.speed = type === "normal" ? HEIGHT * 0.006 : HEIGHT * 0.007;
+        this.speed = HEIGHT * (type === "normal" ? 0.006 : 0.007);
         this.exploded = false;
     }
 
@@ -127,7 +130,7 @@ function updateBgParticles() {
     }
 }
 
-/* ================= TEXT ================= */
+/* ================= TEXT (BETTER FONT) ================= */
 function createText(word) {
     textParticles.length = 0;
 
@@ -136,12 +139,19 @@ function createText(word) {
     temp.height = HEIGHT;
     const tctx = temp.getContext("2d");
 
-    const fontSize = Math.min(WIDTH * 0.18, 80);
+    const fontSize = Math.min(WIDTH * 0.22, 90);
 
-    tctx.fillStyle = "#fff";
     tctx.textAlign = "center";
     tctx.textBaseline = "middle";
-    tctx.font = `900 ${fontSize}px Arial Black`;
+
+    /* OUTLINE */
+    tctx.lineWidth = fontSize * 0.12;
+    tctx.strokeStyle = "#ff2d2d";
+    tctx.font = `900 ${fontSize}px Poppins, Arial, sans-serif`;
+    tctx.strokeText(word, WIDTH / 2, HEIGHT / 2);
+
+    /* FILL */
+    tctx.fillStyle = "#ffffff";
     tctx.fillText(word, WIDTH / 2, HEIGHT / 2);
 
     spawnTextParticles(temp);
@@ -155,18 +165,21 @@ function createFinalText() {
     temp.height = HEIGHT;
     const tctx = temp.getContext("2d");
 
-    tctx.fillStyle = "#fff";
     tctx.textAlign = "center";
     tctx.textBaseline = "middle";
 
-    tctx.font = `900 ${WIDTH * 0.14}px Arial Black`;
-    tctx.fillText("HAPPY", WIDTH / 2, HEIGHT / 2 - HEIGHT * 0.15);
+    function draw(text, size, y) {
+        tctx.lineWidth = size * 0.12;
+        tctx.strokeStyle = "#ff2d2d";
+        tctx.font = `900 ${size}px Poppins, Arial, sans-serif`;
+        tctx.strokeText(text, WIDTH / 2, y);
+        tctx.fillStyle = "#fff";
+        tctx.fillText(text, WIDTH / 2, y);
+    }
 
-    tctx.font = `900 ${WIDTH * 0.12}px Arial Black`;
-    tctx.fillText("NEW YEAR", WIDTH / 2, HEIGHT / 2);
-
-    tctx.font = `900 ${WIDTH * 0.18}px Arial Black`;
-    tctx.fillText("2026", WIDTH / 2, HEIGHT / 2 + HEIGHT * 0.18);
+    draw("HAPPY", WIDTH * 0.16, HEIGHT / 2 - HEIGHT * 0.2);
+    draw("NEW YEAR", WIDTH * 0.13, HEIGHT / 2);
+    draw("2026", WIDTH * 0.22, HEIGHT / 2 + HEIGHT * 0.22);
 
     spawnTextParticles(temp);
 }
@@ -193,7 +206,7 @@ function spawnTextParticles(temp) {
 
 function updateTextParticles() {
     ctx.save();
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 22;
     ctx.shadowColor = "red";
 
     for (const p of textParticles) {
@@ -205,7 +218,7 @@ function updateTextParticles() {
         p.y += p.vy;
 
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 2.3, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 2.8, 0, Math.PI * 2);
         ctx.fillStyle = "#fff";
         ctx.fill();
     }
